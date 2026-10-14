@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Rompecabezas de Refranes 🇻🇪</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- ===== Monetag SDK ===== -->
+<script src='//libtl.com/sdk.js' data-zone='12034764' data-sdk='show_12034764'></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--tg-theme-bg-color, #f6f6f8);
+    color: var(--tg-theme-text-color, #1c1c1e);
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  body.dark {
+    background: var(--tg-theme-bg-color, #1c1c1e);
+    color: var(--tg-theme-text-color, #ffffff);
+  }
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 14px 14px 110px 14px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--tg-theme-secondary-bg-color, #ffffff);
+    border-radius: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand img {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  .title { font-size: 15px; font-weight: 700; }
+  .stats { display: flex; gap: 10px; font-size: 13px; }
+  .stat {
+    background: var(--tg-theme-bg-color, #f6f6f8);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .stat span { color: var(--tg-theme-hint-color, #8e8e93); font-weight: 400; }
+
+  .hint-box {
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--tg-theme-hint-color, #8e8e93);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hint-box.success { color: #34c759; font-weight: 600; }
+  .hint-box.error { color: #ff3b30; font-weight: 600; }
+
+  .slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 110px;
+    padding: 14px;
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    border-radius: 14px;
+    margin-bottom: 14px;
+    align-content: flex-start;
+    justify-content: center;
+  }
+  .slot {
+    min-width: 50px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 2px dashed var(--tg-theme-hint-color, #c7c7cc);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    transition: all .2s;
+  }
+  .slot.filled {
+    border-style: solid;
+    border-color: var(--tg-theme-button-color, #2481cc);
+    background: var(--tg-theme-button-color, #2481cc);
+    color: var(--tg-theme-button-text-color, #fff);
+    cursor: pointer;
+  }
+  .slot.locked {
+    border-style: solid;
+    border-color: #34c759;
+    background: #34c759;
+    color: #fff;
+    cursor: not-allowed;
+    opacity: 0.85;
+  }
+  .slot.wrong {
+    border-color: #ff3b30 !important;
+    background: #ff3b30 !important;
+    animation: shake .4s;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px;
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    border-radius: 14px;
+    min-height: 110px;
+    justify-content: center;
+    align-content: flex-start;
+  }
+  .word {
+    padding: 10px 14px;
+    background: var(--tg-theme-bg-color, #f6f6f8);
+    border: 2px solid var(--tg-theme-hint-color, #c7c7cc);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .15s, opacity .2s;
+  }
+  .word:active { transform: scale(0.95); }
+  .word.used { opacity: 0.25; pointer-events: none; }
+
+  .actions {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    padding: 12px 14px 18px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  }
+  .btn {
+    flex: 1;
+    max-width: 160px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .1s;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: var(--tg-theme-button-color, #2481cc);
+    color: var(--tg-theme-button-text-color, #fff);
+  }
+  .btn-hint {
+    background: #ff9500;
+    color: #fff;
+  }
+  .btn-reset {
+    background: var(--tg-theme-bg-color, #f6f6f8);
+    color: var(--tg-theme-text-color, #1c1c1e);
+    border: 1px solid var(--tg-theme-hint-color, #c7c7cc);
+  }
+
+  .celebration {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    animation: fadeIn .3s;
+  }
+  .celebration.show { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .celebration-card {
+    background: var(--tg-theme-secondary-bg-color, #fff);
+    padding: 28px 24px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+  }
+  .celebration-card h2 { font-size: 22px; margin-bottom: 8px; }
+  .celebration-card p { font-size: 14px; color: var(--tg-theme-hint-color, #8e8e93); margin-bottom: 16px; }
+  .celebration-card .refran {
+    font-style: italic;
+    font-weight: 600;
+    margin-bottom: 18px;
+    padding: 12px;
+    background: var(--tg-theme-bg-color, #f6f6f8);
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .ad-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    color: #fff;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .ad-overlay.show { display: flex; }
+  .ad-overlay .spinner {
+    width: 50px; height: 50px;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top-color: #ff9500;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img src="banner.jpg" alt="logo" />
+      <div class="title">Refranes VE</div>
+    </div>
+    <div class="stats">
+      <div class="stat">Nv <span id="level">1</span></div>
+      <div class="stat">⭐ <span id="score">0</span></div>
+    </div>
+  </header>
+
+  <div class="hint-box" id="hint">Ordena las palabras para formar el refrán</div>
+
+  <div class="slots" id="slots"></div>
+  <div class="pool" id="pool"></div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-reset" id="btnReset">🔄</button>
+  <button class="btn btn-hint" id="btnHint">💡 Pista</button>
+  <button class="btn btn-primary" id="btnCheck">Comprobar</button>
+</div>
+
+<div class="celebration" id="celebration">
+  <div class="celebration-card">
+    <h2>🎉 ¡Correcto!</h2>
+    <div class="refran" id="celebRefran"></div>
+    <p>+<span id="celebPoints">10</span> puntos</p>
+    <button class="btn btn-primary" style="width:100%" id="btnNext">Siguiente nivel ▶</button>
+  </div>
+</div>
+
+<div class="ad-overlay" id="adOverlay">
+  <div class="spinner"></div>
+  <div>Reproduciendo anuncio...</div>
+  <div style="font-size:12px;opacity:0.7">No cierres la app</div>
+</div>
+
+<script>
+// ============ SDK Telegram ============
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.expand();
+  tg.ready();
+  if (tg.colorScheme === 'dark') document.body.classList.add('dark');
+  document.body.style.backgroundColor = tg.backgroundColor || '';
+}
+function haptic(type = 'light') {
+  try { tg?.HapticFeedback?.impactOccurred(type); } catch(e){}
+}
+
+// ============ Refranes venezolanos ============
+const REFRANES = [
+  "Camarón que se duerme se lo lleva la corriente",
+  "Dime con quién andas y te diré quién eres",
+  "A quien madruga Dios le ayuda",
+  "Más vale pájaro en mano que cien volando",
+  "El que mucho abarca poco aprieta",
+  "No hay mal que por bien no venga",
+  "En boca cerrada no entran moscas",
+  "A falta de pan buenas son tortas",
+  "Del dicho al hecho hay mucho trecho",
+  "Ojos que no ven corazón que no siente"
+];
+
+// ============ Estado ============
+let state = {
+  level: 0,
+  score: 0,
+  current: null,
+  selectedWord: null
+};
+
+// ============ Utilidades ============
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (a.join(' ') === arr.join(' ') && a.length > 1) return shuffle(arr);
+  return a;
+}
+
+function setHint(msg, type = '') {
+  const el = document.getElementById('hint');
+  el.textContent = msg;
+  el.className = 'hint-box' + (type ? ' ' + type : '');
+}
+
+// ============ Render ============
+function render() {
+  const slotsEl = document.getElementById('slots');
+  const poolEl = document.getElementById('pool');
+  slotsEl.innerHTML = '';
+  poolEl.innerHTML = '';
+
+  state.current.slots.forEach((word, idx) => {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    if (state.current.locked.has(idx)) {
+      slot.classList.add('locked');
+      slot.textContent = word;
+    } else if (word) {
+      slot.classList.add('filled');
+      slot.textContent = word;
+      slot.onclick = () => removeFromSlot(idx);
+    }
+    slotsEl.appendChild(slot);
+  });
+
+  state.current.words.forEach((word, idx) => {
+    const w = document.createElement('div');
+    w.className = 'word';
+    w.textContent = word;
+    if (state.current.used[idx]) w.classList.add('used');
+    w.onclick = () => selectWord(idx);
+    poolEl.appendChild(w);
+  });
+
+  document.getElementById('level').textContent = state.level + 1;
+  document.getElementById('score').textContent = state.score;
+}
+
+// ============ Lógica ============
+function loadLevel() {
+  const text = REFRANES[state.level % REFRANES.length];
+  const answer = text.split(' ');
+  const words = shuffle(answer);
+  state.current = {
+    answer,
+    words,
+    slots: new Array(answer.length).fill(null),
+    used: new Array(words.length).fill(false),
+    locked: new Set()
+  };
+  setHint('Ordena las palabras para formar el refrán');
+  render();
+}
+
+function selectWord(poolIdx) {
+  if (state.current.used[poolIdx]) return;
+  haptic('light');
+  const slotIdx = state.current.slots.findIndex((s, i) => !s && !state.current.locked.has(i));
+  if (slotIdx === -1) return;
+  state.current.slots[slotIdx] = state.current.words[poolIdx];
+  state.current.used[poolIdx] = true;
+  render();
+}
+
+function removeFromSlot(slotIdx) {
+  if (state.current.locked.has(slotIdx)) return;
+  const word = state.current.slots[slotIdx];
+  if (!word) return;
+  haptic('light');
+  const poolIdx = state.current.words.findIndex((w, i) => w === word && !state.current.used[i]);
+  if (poolIdx !== -1) state.current.used[poolIdx] = false;
+  state.current.slots[slotIdx] = null;
+  render();
+}
+
+function checkAnswer() {
+  if (state.current.slots.some(s => !s)) {
+    setHint('⚠️ Completa todas las casillas', 'error');
+    haptic('warning');
+    return;
+  }
+  const correct = state.current.slots.every((w, i) => w === state.current.answer[i]);
+  if (correct) {
+    const points = 10 + Math.max(0, 5 - state.current.locked.size * 2);
+    state.score += points;
+    haptic('heavy');
+    document.getElementById('celebRefran').textContent = state.current.answer.join(' ');
+    document.getElementById('celebPoints').textContent = points;
+    document.getElementById('celebration').classList.add('show');
+    setHint('🎉 ¡Correcto!', 'success');
+  } else {
+    haptic('error');
+    const slotsEl = document.querySelectorAll('.slot.filled');
+    let wrongCount = 0;
+    state.current.slots.forEach((w, i) => {
+      if (w !== state.current.answer[i] && !state.current.locked.has(i)) wrongCount++;
+    });
+    setHint(`❌ ${wrongCount} palabra${wrongCount !== 1 ? 's' : ''} fuera de lugar`, 'error');
+    slotsEl.forEach((el, i) => {
+      if (state.current.slots[i] !== state.current.answer[i] && !state.current.locked.has(i)) {
+        el.classList.add('wrong');
+        setTimeout(() => el.classList.remove('wrong'), 500);
+      }
+    });
+  }
+  render();
+}
+
+function resetLevel() {
+  haptic('light');
+  state.current.slots = new Array(state.current.answer.length).fill(null);
+  state.current.used = new Array(state.current.words.length).fill(false);
+  state.current.locked.forEach(i => {
+    state.current.slots[i] = state.current.answer[i];
+    const poolIdx = state.current.words.findIndex((w, idx) => w === state.current.answer[i] && !state.current.used[idx]);
+    if (poolIdx !== -1) state.current.used[poolIdx] = true;
+  });
+  setHint('Ordena las palabras para formar el refrán');
+  render();
+}
+
+function nextLevel() {
+  state.level++;
+  document.getElementById('celebration').classList.remove('show');
+  loadLevel();
+}
+
+// ============ Monetag Rewarded Ad ============
+function showRewardedAd() {
+  const overlay = document.getElementById('adOverlay');
+  overlay.classList.add('show');
+
+  // Verificar que el SDK de Monetag cargó correctamente
+  if (typeof window.show_12034764 !== 'function') {
+    console.error('Monetag SDK no disponible');
+    overlay.classList.remove('show');
+    setHint('⚠️ Anuncio no disponible, intenta más tarde', 'error');
+    return;
+  }
+
+  window.show_12034764().then(() => {
+    overlay.classList.remove('show');
+    rewardHint();
+  }).catch((err) => {
+    console.error('Error mostrando anuncio:', err);
+    overlay.classList.remove('show');
+    setHint('⚠️ No se pudo cargar el anuncio', 'error');
+  });
+}
+
+function rewardHint() {
+  const firstFree = state.current.slots.findIndex((s, i) => !s && !state.current.locked.has(i));
+  if (firstFree === -1) {
+    setHint('Ya no hay pistas disponibles');
+    return;
+  }
+  const correctWord = state.current.answer[firstFree];
+  state.current.slots[firstFree] = correctWord;
+  state.current.locked.add(firstFree);
+  const poolIdx = state.current.words.findIndex((w, i) => w === correctWord && !state.current.used[i]);
+  if (poolIdx !== -1) state.current.used[poolIdx] = true;
+  haptic('heavy');
+  setHint(`💡 Palabra revelada: "${correctWord}"`, 'success');
+  render();
+}
+
+// ============ Eventos ============
+document.getElementById('btnCheck').onclick = checkAnswer;
+document.getElementById('btnReset').onclick = resetLevel;
+document.getElementById('btnHint').onclick = showRewardedAd;
+document.getElementById('btnNext').onclick = nextLevel;
+
+// ============ Inicio ============
+loadLevel();
+</script>
+</body>
+</html>
