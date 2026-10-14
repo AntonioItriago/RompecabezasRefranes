@@ -295,7 +295,7 @@ function haptic(type = 'light') {
   try { tg?.HapticFeedback?.impactOccurred(type); } catch(e){}
 }
 
-// ============ Refranes venezolanos ============
+// ============ 40+ Refranes venezolanos ============
 const REFRANES = [
   "Camarón que se duerme se lo lleva la corriente",
   "Dime con quién andas y te diré quién eres",
@@ -306,8 +306,66 @@ const REFRANES = [
   "En boca cerrada no entran moscas",
   "A falta de pan buenas son tortas",
   "Del dicho al hecho hay mucho trecho",
-  "Ojos que no ven corazón que no siente"
+  "Ojos que no ven corazón que no siente",
+  "A buen entendedor pocas palabras bastan",
+  "El que es perico donde quiera es verde",
+  "Más sabe el diablo por viejo que por diablo",
+  "Cría cuervos y te sacarán los ojos",
+  "Más vale solo que mal acompañado",
+  "El que ríe último ríe mejor",
+  "Dios aprieta pero no ahoga",
+  "En casa de herrero cuchillo de palo",
+  "Más vale maña que fuerza",
+  "El que busca encuentra",
+  "No hay peor lucha que la que no se hace",
+  "A caballo regalado no le mires el diente",
+  "El que mucho amenaza poco aprieta",
+  "Más vale tarde que nunca",
+  "El que con lobos anda a aullar se enseña",
+  "No hay mal que cien años dure",
+  "Más vale prevenir que curar",
+  "El que siembra vientos recoge tempestades",
+  "Dime de qué presumes y te diré de qué careces",
+  "A mal tiempo buena cara",
+  "El que no arriesga no gana",
+  "No hay peor ciego que el que no quiere ver",
+  "El que anda con cojos aprende a cojear",
+  "A cada cerdo le llega su San Martín",
+  "Quien mucho duerme poco vive",
+  "El que tiene boca se equivoca",
+  "No hay rosa sin espinas",
+  "Más vale prevenir que lamentar",
+  "El que es malo para uno es malo para todos",
+  "A falta de amor buenas son patadas",
+  "El que nace para real nunca llega a peso",
+  "Más vale maña que fuerza bruta",
+  "No es oro todo lo que reluce",
+  "El que mucho corre pronto se cansa",
+  "A buen hambre no hay pan duro"
 ];
+
+// ============ Sistema anti-repetición ============
+let shuffledIndices = [];
+let currentIndex = 0;
+
+function regenerateShuffledIndices() {
+  shuffledIndices = [...Array(REFRANES.length).keys()];
+  // Fisher-Yates shuffle
+  for (let i = shuffledIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+  }
+  currentIndex = 0;
+}
+
+function getNextRefranIndex() {
+  if (currentIndex >= shuffledIndices.length) {
+    regenerateShuffledIndices();
+  }
+  const index = shuffledIndices[currentIndex];
+  currentIndex++;
+  return index;
+}
 
 // ============ Estado ============
 let state = {
@@ -370,7 +428,8 @@ function render() {
 
 // ============ Lógica ============
 function loadLevel() {
-  const text = REFRANES[state.level % REFRANES.length];
+  const refranIndex = getNextRefranIndex();
+  const text = REFRANES[refranIndex];
   const answer = text.split(' ');
   const words = shuffle(answer);
   state.current = {
@@ -462,7 +521,6 @@ function showRewardedAd() {
   const overlay = document.getElementById('adOverlay');
   overlay.classList.add('show');
 
-  // Verificar que el SDK de Monetag cargó correctamente
   if (typeof window.show_12034764 !== 'function') {
     console.error('Monetag SDK no disponible');
     overlay.classList.remove('show');
@@ -503,6 +561,7 @@ document.getElementById('btnHint').onclick = showRewardedAd;
 document.getElementById('btnNext').onclick = nextLevel;
 
 // ============ Inicio ============
+regenerateShuffledIndices();
 loadLevel();
 </script>
 </body>
